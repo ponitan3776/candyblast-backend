@@ -1,0 +1,31 @@
+# バックエンド(Flask API)だけをRenderに置く。フロントエンドは GitHub Pages(.github/workflows/pages.yml)。
+services:
+  - type: web
+    name: pinkyburst
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    # --threads 8: ポーリングが多いので、1ワーカーのまま同時に複数リクエストを捌く
+    # (ワーカーを増やすと定期実行ジョブが二重に動くので -w 1 のまま)
+    startCommand: "gunicorn -w 1 --threads 8 --timeout 120 --keep-alive 30 -b 0.0.0.0:$PORT app:app"
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL        # Supabase の Session pooler / Transaction pooler の接続文字列
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS     # 例: https://ユーザー名.github.io (未設定なら全許可)
+        sync: false
+      - key: DISCORD_WEBHOOK_AUTH
+        sync: false
+      - key: DISCORD_WEBHOOK_LOGIN
+        sync: false
+      - key: DISCORD_WEBHOOK_FEATURE_REQUEST
+        sync: false
+      - key: DISCORD_WEBHOOK_BUG_REPORT
+        sync: false
+      - key: HALLOWEEN_END      # 任意: イベントの終了日時(例 2026-11-08T00:00:00+09:00)
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.9
